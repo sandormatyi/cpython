@@ -847,7 +847,14 @@ oserror_parse_args(PyObject **p_args,
             winerrcode = PyLong_AsLong(*winerror);
             if (winerrcode == -1 && PyErr_Occurred())
                 return -1;
-            errcode = winerror_to_errno(winerrcode);
+            /* Set errno to the corresponding POSIX errno (overriding
+               first argument).  Windows Socket error codes (>= 10000)
+               have the same value as their POSIX counterparts.
+            */
+            if (winerrcode < 10000)
+                errcode = winerror_to_errno(winerrcode);
+            else
+                errcode = winerrcode;
             *myerrno = PyLong_FromLong(errcode);
             if (!*myerrno)
                 return -1;
